@@ -1,0 +1,154 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body>
+  <div class="flex justify-center gap-5">
+
+    <input class="border border-bg-black rounded-lg" type="text" id="searchBox" placeholder="Search cuisine">
+    <button class="bg-green-500  px-2 py-2 rounded-lg  onclick="searchRecipe()">Search</button>
+    <button class="bg-blue-500  px-4 py-2 rounded-lg onclick="showData()">Show All Recipes</button>
+    <button class="bg-orange-500 px-4 py-2 rounded-lg onclick="showFavourites()">Show Favourites</button>
+</div>
+    <div id="result"></div>
+
+</body>
+
+<script>
+
+let apiResponse = null
+let favData = JSON.parse(localStorage.getItem("data")) || []
+
+
+const getData = async () => {
+    try {
+        let response = await fetch("https://dummyjson.com/recipes")
+        apiResponse = await response.json()
+        console.log(apiResponse)
+        showData()
+
+    } catch(error) {
+        alert("API calling failed")
+    }
+}
+getData()
+
+
+
+const showData = () => {
+    if(!apiResponse) {
+        alert("Data is loading please wait")
+        return
+    }
+    document.querySelector("#result").innerHTML = apiResponse.recipes.map((eachdata) => `
+        <div>
+            <img class="w-32 h-32 object-cover" src="${eachdata.image}" alt="">
+
+            <p>${eachdata.name}</p>
+            <p>${eachdata.cuisine}</p>
+            <p>${eachdata.ingredients.join(", ")}</p>
+
+            <button class="bg-yellow-500 px-4 py-2 rounded-lg onclick="addToFav(${eachdata.id})">
+                Add to Favourite
+            </button>
+        </div>
+    `).join("")
+}
+
+
+
+
+const addToFav = (favid) => {
+
+    let data = apiResponse.recipes.find((eachdata) => eachdata.id === favid)
+    const alreadyExist = favData.some((eachdata) => eachdata.id === favid)
+
+    if(alreadyExist) {
+        alert("Already added to favourites")
+        return
+    }
+    favData.push(data)
+    localStorage.setItem("data", JSON.stringify(favData))
+    alert("Added to favourites")
+
+}
+
+
+
+
+const showFavourites = () => {
+
+    favData = JSON.parse(localStorage.getItem("data")) || []
+    if(favData.length === 0) {
+        alert("No favourites found")
+        return
+    }
+    document.querySelector("#result").innerHTML = favData.map((eachdata) => `
+        <div>
+            <img class="w-32 h-32 object-cover" src="${eachdata.image}" alt="">
+
+            <p>${eachdata.name}</p>
+            <p>${eachdata.cuisine}</p>
+            <p>${eachdata.ingredients.join(", ")}</p>
+
+            <button class="bg-yellow-500 px-4 py-2 rounded-lg onclick="editData(${eachdata.id})">
+                Edit
+            </button>
+
+            <button class="bg-red-500 px-4 py-2 rounded-lg onclick="deleteData(${eachdata.id})">
+                Delete
+            </button>
+        </div>
+    `).join("")
+
+}
+
+
+
+
+const deleteData = (did) => {
+
+    favData = JSON.parse(localStorage.getItem("data")) || []
+    let filteredData = favData.filter((eachdata) => eachdata.id !== did)
+    localStorage.setItem("data", JSON.stringify(filteredData))
+    showFavourites()
+    alert("Recipe deleted successfully")
+
+}
+
+
+
+
+
+const searchRecipe = () => {
+
+    if(!apiResponse) {
+        alert("Data is loading please wait")
+        return
+    }
+    let searchVal = document.querySelector("#searchBox").value
+    let searchData = apiResponse.recipes.filter((eachdata) => eachdata.cuisine.includes(searchVal))
+    
+    document.querySelector("#result").innerHTML = searchData.map((eachdata) => `
+        <div>
+            <img class="w-32 h-32 object-cover" src="${eachdata.image}" alt="">
+
+            <p>${eachdata.name}</p>
+            <p>${eachdata.cuisine}</p>
+            <p>${eachdata.ingredients.join(", ")}</p>
+
+            <button class="bg-yellow-500 px-4 py-2 rounded-lg onclick="addToFav(${eachdata.id})">
+                Add to Favourite
+            </button>
+        </div>
+    `).join("")
+
+}
+
+</script>
+</html>
